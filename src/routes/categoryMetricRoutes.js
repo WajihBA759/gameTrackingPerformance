@@ -1,34 +1,22 @@
 const express = require('express');
-const  authenticate  = require('../middleware/authMiddleware').authMiddleware;
-const  adminMiddleware  = require('../middleware/adminMiddleware').adminMiddleware;
-const {
-  getAllCategoryMetrics,
-  createCategoryMetric,
-  updateCategoryMetric,
-  deleteCategoryMetric,
-  getCategoryMetricsByCategory,
-  initializeCategoryMetrics, 
-  evaluateMetric
-} = require('../controllers/categoryMetricController');
-
 const router = express.Router();
+const categoryMetricController = require('../controllers/categoryMetricController');
+const authenticate = require('../middleware/authMiddleware').authMiddleware;
+const adminMiddleware = require('../middleware/adminMiddleware').adminMiddleware;
 
-// All routes require authentication
+// Apply authentication to all routes
 router.use(authenticate);
 
-// Admin-only routes
-router.post('/', adminMiddleware, createCategoryMetric);
-router.put('/:metricId', adminMiddleware, updateCategoryMetric);
-router.delete('/:metricId', adminMiddleware, deleteCategoryMetric);
+// IMPORTANT: More specific routes FIRST, generic routes LAST
+router.post('/initialize', adminMiddleware, categoryMetricController.initializeCategoryMetrics);
+router.post('/evaluate', categoryMetricController.evaluateMetric);
+router.get('/category/:categoryId', categoryMetricController.getCategoryMetricsByCategory); // Specific route
+router.get('/', categoryMetricController.getAllCategoryMetrics);
+router.post('/', adminMiddleware, categoryMetricController.createCategoryMetric);
 
-// Admin-only: initialize metrics automatically from a category's endpoint
-router.post('/initialize', adminMiddleware, initializeCategoryMetrics);
-
-// Public: evaluate a specific metric (e.g., sum, avg, count)
-router.post('/evaluate', evaluateMetric);
-
-// Public read routes
-router.get('/', getAllCategoryMetrics);
-router.get('/category/:categoryId', getCategoryMetricsByCategory);
+// Generic :metricId route MUST be last
+router.get('/:metricId', categoryMetricController.getCategoryMetricById);
+router.put('/:metricId', adminMiddleware, categoryMetricController.updateCategoryMetric);
+router.delete('/:metricId', adminMiddleware, categoryMetricController.deleteCategoryMetric);
 
 module.exports = router;

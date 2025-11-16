@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Category</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            padding: 40px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .game-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .parameters-section {
+            border: 2px dashed #e0e0e0;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .parameter-item {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr auto;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: end;
+        }
+        
+        .headers-section {
+            border: 2px dashed #e0e0e0;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .header-item {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: end;
+        }
+        
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-right: 10px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        
+        .btn-add {
+            background: #4CAF50;
+            color: white;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+        }
+        
+        .btn-remove {
+            background: #f44336;
+            color: white;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 30px rgba(0,0,0,0.3);
+        }
+        
+        .modal h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .help-text {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/categories/game/<%= game._id %>" class="back-link">← Back to Categories</a>
+        
+        <h1>📁 Add Category</h1>
+        <div class="game-badge">Game: <%= game.name %></div>
+        <p class="subtitle">Create a new category for this game</p>
+        
+        <div id="alertBox" class="alert"></div>
+        
+        <form id="addCategoryForm">
+            <input type="hidden" id="gameId" value="<%= game._id %>">
+            
+            <div class="form-group">
+                <label for="name">Category Name *</label>
+                <input 
+                    type="text" 
+                    id="name" 
+                    name="name" 
+                    placeholder="e.g., Player Matches" 
+                    required
+                >
+                <div class="help-text">A descriptive name for this category</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="endpoint">Base API Endpoint *</label>
+                <input 
+                    type="text" 
+                    id="endpoint" 
+                    name="endpoint" 
+                    placeholder="e.g., https://api.example.com/valorant/matches" 
+                    required
+                >
+                <div class="help-text">Parameters will be automatically appended</div>
+            </div>
+            
+            <div class="headers-section">
+                <h3>Headers</h3>
+                <div id="headersContainer">
+                    <div class="header-item">
+                        <div>
+                            <input type="text" class="header-key" placeholder="Header Key (e.g., Authorization)">
+                        </div>
+                        <div>
+                            <input type="text" class="header-value" placeholder="Header Value">
+                        </div>
+                        <button type="button" class="btn btn-remove" onclick="removeHeader(this)">Remove</button>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-add" onclick="addHeader()">+ Add Header</button>
+            </div>
+            
+            <div class="parameters-section">
+                <h3>URL Parameters</h3>
+                <div id="parametersContainer">
+                    <div class="parameter-item">
+                        <div>
+                            <input type="text" class="param-name" placeholder="Parameter Name (e.g., region)" required>
+                        </div>
+                        <div>
+                            <select class="param-type">
+                                <option value="string">String</option>
+                                <option value="number">Number</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: flex; align-items: center; gap: 5px;">
+                                <input type="checkbox" class="param-required" checked> Required
+                            </label>
+                        </div>
+                        <button type="button" class="btn btn-remove" onclick="removeParameter(this)">Remove</button>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-add" onclick="addParameter()">+ Add Parameter</button>
+            </div>
+            
+            <div>
+                <button type="submit" class="btn btn-primary">Create Category</button>
+                <button type="button" class="btn btn-secondary" onclick="window.location.href='/categories/game/<%= game._id %>'">
+                    Cancel
+                </button>
+            </div>
+        </form>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Creating category...</p>
+        </div>
+    </div>
+    
+    <!-- Initialize Metrics Modal -->
+    <div id="initModal" class="modal">
+        <div class="modal-content">
+            <h2>🎉 Category Created!</h2>
+            <p>Would you like to initialize metrics for this category?</p>
+            <p style="color: #666; font-size: 0.9rem; margin-top: 10px;">
+                This will automatically extract available metrics from the API response.
+            </p>
+            
+            <div class="form-group" style="margin-top: 20px;">
+                <label>Extraction Depth</label>
+                <input type="number" id="depth" value="4" min="1" max="10">
+                <div class="help-text">How deep to traverse the API response (1-10)</div>
+            </div>
+            
+            <div id="parametersInput"></div>
+            
+            <div class="modal-buttons">
+                <button class="btn btn-primary" onclick="initializeMetrics()">Yes, Initialize</button>
+                <button class="btn btn-secondary" onclick="skipInitialization()">Skip for Now</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const token = localStorage.getItem('token') || 'YOUR_JWT_TOKEN_HERE';
+        const form = document.getElementById('addCategoryForm');
+        const alertBox = document.getElementById('alertBox');
+        const loading = document.getElementById('loading');
+        const modal = document.getElementById('initModal');
+        let createdCategoryId = null;
+        let categoryParameters = [];
+        
+        function addParameter() {
+            const container = document.getElementById('parametersContainer');
+            const paramItem = document.createElement('div');
+            paramItem.className = 'parameter-item';
+            paramItem.innerHTML = `
+                <div>
+                    <input type="text" class="param-name" placeholder="Parameter Name" required>
+                </div>
+                <div>
+                    <select class="param-type">
+                        <option value="string">String</option>
+                        <option value="number">Number</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: flex; align-items: center; gap: 5px;">
+                        <input type="checkbox" class="param-required" checked> Required
+                    </label>
+                </div>
+                <button type="button" class="btn btn-remove" onclick="removeParameter(this)">Remove</button>
+            `;
+            container.appendChild(paramItem);
+        }
+        
+        function removeParameter(btn) {
+            btn.closest('.parameter-item').remove();
+        }
+        
+        function addHeader() {
+            const container = document.getElementById('headersContainer');
+            const headerItem = document.createElement('div');
+            headerItem.className = 'header-item';
+            headerItem.innerHTML = `
+                <div>
+                    <input type="text" class="header-key" placeholder="Header Key">
+                </div>
+                <div>
+                    <input type="text" class="header-value" placeholder="Header Value">
+                </div>
+                <button type="button" class="btn btn-remove" onclick="removeHeader(this)">Remove</button>
+            `;
+            container.appendChild(headerItem);
+        }
+        
+        function removeHeader(btn) {
+            btn.closest('.header-item').remove();
+        }
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Collect parameters
+            const parameters = [];
+            document.querySelectorAll('.parameter-item').forEach(item => {
+                const name = item.querySelector('.param-name').value.trim();
+                if (name) {
+                    parameters.push({
+                        name: name,
+                        type: item.querySelector('.param-type').value,
+                        required: item.querySelector('.param-required').checked
+                    });
+                }
+            });
+            
+            if (parameters.length === 0) {
+                showAlert('Please add at least one parameter', 'error');
+                return;
+            }
+            
+            // Collect headers
+            const headers = {};
+            document.querySelectorAll('.header-item').forEach(item => {
+                const key = item.querySelector('.header-key').value.trim();
+                const value = item.querySelector('.header-value').value.trim();
+                if (key && value) {
+                    headers[key] = value;
+                }
+            });
+            
+            const formData = {
+                name: document.getElementById('name').value,
+                endpoint: document.getElementById('endpoint').value,
+                game: document.getElementById('gameId').value,
+                headers: headers,
+                parameters: parameters
+            };
+            
+            categoryParameters = parameters;
+            
+            loading.style.display = 'block';
+            form.style.display = 'none';
+            alertBox.style.display = 'none';
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/categories', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                loading.style.display = 'none';
+                
+                if (response.ok) {
+                    // Get the created category ID
+                    const categoriesResponse = await fetch(`http://localhost:5000/api/categories/game/${formData.game}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const categories = await categoriesResponse.json();
+                    const category = categories.find(c => c.name === formData.name);
+                    createdCategoryId = category._id;
+                    
+                    // Show initialization modal
+                    buildParameterInputs(parameters);
+                    modal.style.display = 'block';
+                } else {
+                    form.style.display = 'block';
+                    showAlert(data.message || 'Failed to create category', 'error');
+                }
+            } catch (error) {
+                loading.style.display = 'none';
+                form.style.display = 'block';
+                showAlert('Network error. Please try again.', 'error');
+                console.error('Error:', error);
+            }
+        });
+        
+        function buildParameterInputs(parameters) {
+            const container = document.getElementById('parametersInput');
+            container.innerHTML = '<h3 style="margin-top: 20px;">Parameter Values</h3>';
+            
+            parameters.forEach(param => {
+                const div = document.createElement('div');
+                div.className = 'form-group';
+                div.innerHTML = `
+                    <label>${param.name} ${param.required ? '*' : ''}</label>
+                    <input 
+                        type="text" 
+                        id="param_${param.name}" 
+                        placeholder="Enter ${param.name}"
+                        ${param.required ? 'required' : ''}
+                    >
+                `;
+                container.appendChild(div);
+            });
+        }
+        
+        async function initializeMetrics() {
+            const parameters = {};
+            categoryParameters.forEach(param => {
+                const value = document.getElementById(`param_${param.name}`).value.trim();
+                if (param.required && !value) {
+                    alert(`Please provide value for ${param.name}`);
+                    return;
+                }
+                parameters[param.name] = value;
+            });
+            
+            const depth = document.getElementById('depth').value;
+            
+            modal.style.display = 'none';
+            loading.style.display = 'block';
+            loading.querySelector('p').textContent = 'Initializing metrics...';
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/category-metrics/initialize', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        categoryId: createdCategoryId,
+                        depth: parseInt(depth),
+                        parameters: parameters
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    alert(`Success! ${data.totalMetrics} metrics initialized.`);
+                    window.location.href = `/categories/game/${document.getElementById('gameId').value}`;
+                } else {
+                    loading.style.display = 'none';
+                    alert('Failed to initialize metrics: ' + data.message);
+                    window.location.href = `/categories/game/${document.getElementById('gameId').value}`;
+                }
+            } catch (error) {
+                loading.style.display = 'none';
+                alert('Error initializing metrics');
+                window.location.href = `/categories/game/${document.getElementById('gameId').value}`;
+            }
+        }
+        
+        function skipInitialization() {
+            modal.style.display = 'none';
+            window.location.href = `/categories/game/${document.getElementById('gameId').value}`;
+        }
+        
+        function showAlert(message, type) {
+            alertBox.textContent = message;
+            alertBox.className = `alert alert-${type}`;
+            alertBox.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

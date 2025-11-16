@@ -7,6 +7,8 @@ const userRoutes=require('./routes/userRoutes');
 const gameRoutes=require('./routes/gameRoutes');
 const CategoryRoutes=require('./routes/categoryRoutes');
 const categoryMetricRoutes=require('./routes/categoryMetricRoutes');
+const categoryMetricsViewRoutes=require('./viewRoutes/categoryMetricsViewRoutes');
+const indexRoutes=require('./routes/index');
 dotenv.config();//loads environment variables from .env file
 const app = express();
 app.use(
@@ -16,16 +18,34 @@ app.use(
     credentials: true, // if you ever send cookies or auth headers
   })
 )
+//setting ejs as the view engine
+app.set('view engine', 'ejs');
+app.set('views', './views'); 
+//middleware to parse JSON request bodies
 app.use(express.json());
 app.use('/api/category-metrics', categoryMetricRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/user',userRoutes);
 app.use('/api/games',gameRoutes);
+
+//view routes
+app.use('/', indexRoutes);
+
+
 app.use('/api/categories',CategoryRoutes);
+app.use( (req, res) => {
+    res.status(404).render('404');
+});
 // app.get('/api/profile', authMiddleware, (req, res) => {
 //     res.json({ message: 'This is a protected profile route', user: req.user.id });
 //     console.log(req.user.id);
 // });
+
+
+
+
+
+//starting the server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
