@@ -1,4 +1,6 @@
 function getValueAtPath(obj, path) {
+  console.log('------------obj:  ',obj);
+  console.log('------------path:  ',path);
   if (!obj || !path) return undefined;
 
   const keys = path.split('.');

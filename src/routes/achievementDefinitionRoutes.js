@@ -1,20 +1,35 @@
-const {
-    createAchievementDefinition,
-    getAchievementDefinitions,
-    getAchievementDefinitionById,
-    updateAchievementDefinition,
-    deleteAchievementDefinition
-}=require('../controllers/achievementDefinitionController');
-const express=require('express');
-const { authenticate } = require('../middleware/authMiddleware');
-const adminMiddleware=require('../middleware/adminMiddleware');
+// src/routes/achievementDefinitionRoutes.js
 
-const router=express.Router();
-router.use(authenticate);
+const express = require('express');
+const router = express.Router();
+
+const {
+  createAchievementDefinition,
+  getAllAchievementDefinitions,
+  getAchievementDefinitionById,
+  updateAchievementDefinition,
+  deleteAchievementDefinition
+} = require('../controllers/achievementDefinitionController');
+
+
+const  authMiddleware  = require('../middleware/authMiddleware').authMiddleware;
+const  adminMiddleware  = require('../middleware/adminMiddleware').adminMiddleware;
+
+// Auth then admin for all achievement definition routes
+router.use(authMiddleware);
 router.use(adminMiddleware);
+
+// Create achievement definition
 router.post('/', createAchievementDefinition);
-router.get('/', getAchievementDefinitions);
-router.get('/:id', getAchievementDefinitionById);
-router.put('/:id', updateAchievementDefinition);
-router.delete('/:id', deleteAchievementDefinition);
-module.exports=router;
+
+// List all definitions
+router.get('/', getAllAchievementDefinitions);
+
+
+// Update
+router.put('/:achievementId', updateAchievementDefinition);
+
+// Delete
+router.delete('/:achievementId', deleteAchievementDefinition);
+
+module.exports = router;

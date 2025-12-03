@@ -27,7 +27,13 @@ const CategoryMetricSchema = new Schema({
     groupBy: {
         type: String,
         required: false
-    }
+    },
+    playerUnique:{
+        type:Boolean,
+        required:true,
+        default:false,
+    },
+    separatorPath: { type: String }
 });
 
 module.exports = mongoose.model('CategoryMetric', CategoryMetricSchema);

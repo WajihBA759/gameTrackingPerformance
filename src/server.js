@@ -8,7 +8,10 @@ const gameRoutes=require('./routes/gameRoutes');
 const CategoryRoutes=require('./routes/categoryRoutes');
 const categoryMetricRoutes=require('./routes/categoryMetricRoutes');
 const categoryMetricsViewRoutes=require('./viewRoutes/categoryMetricsViewRoutes');
+const gameAccountRoutes=require('./routes/gameAccountRoutes');
+const playerAchievementRoutes=require('./routes/playerAchievementRoutes');
 const indexRoutes=require('./routes/index');
+const achievementDefinitionRoutes=require('./routes/achievementDefinitionRoutes');
 dotenv.config();//loads environment variables from .env file
 const app = express();
 app.use(
@@ -27,6 +30,9 @@ app.use('/api/category-metrics', categoryMetricRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/user',userRoutes);
 app.use('/api/games',gameRoutes);
+app.use('/api/game-accounts', gameAccountRoutes);
+app.use('/api/player-achievements',playerAchievementRoutes);
+app.use('/api/achievement-definition',achievementDefinitionRoutes);
 
 //view routes
 app.use('/', indexRoutes);

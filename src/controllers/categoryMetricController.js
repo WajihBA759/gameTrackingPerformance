@@ -5,6 +5,8 @@ const Category = require('../models/category');
 const extractMetricPaths = require('../utils/extractMetricPaths');
 const metricLogic = require('../utils/metricLogic');
 const  buildEndpoint  = require('../utils/buildEndpoint').buildEndpoint;
+const GameAccount= require('../models/gameAccount');
+const evaluateMetricForCategory= require('../utils/evaluateMetricForCategory');
 
 exports.createCategoryMetric=async(req,res)=>{
     const { category, metricName, metricPath, customizationOptions } = req.body;
@@ -107,7 +109,7 @@ exports.initializeCategoryMetrics = async (req, res) => {
     const finalEndpoint = buildEndpoint(
       category.endpoint,
       category.parameters,
-      parameters //testing if valuesInOrder is needed or parameters object works
+      parameters
     );
 
     // Call external API
@@ -115,8 +117,12 @@ exports.initializeCategoryMetrics = async (req, res) => {
       headers: category.headers || {}
     });
 
-    // extract metric paths
-    const paths = extractMetricPaths(data, '', depth);
+    // Use first element of data.data as the root for path extraction
+    // This way paths will be relative to a single match (e.g. "players.all_players.stats.kills")
+    const root = Array.isArray(data.data) && data.data.length > 0 ? data.data[0] : data;
+
+    // extract metric paths from the root object
+    const paths = extractMetricPaths(root, '', depth);
 
     for (const path of paths) {
       await CategoryMetric.create({
@@ -177,4 +183,72 @@ exports.evaluateMetric = async (req, res) => {
     console.error('Error evaluating metric:', err);
     res.status(500).json({ message: 'Error evaluating metric' });
   }
+};
+// getting a specefic metric value for a given user identifier 
+// since we re gonna force the user s hand here we re gonna set it by default the puuid
+exports.getMetricForUser = async (req, res) => {
+try {
+const { metricId, userId } = req.params;
+//Load metric and its category
+const metric = await CategoryMetric.findById(metricId).populate('category');
+if (!metric) {
+  return res.status(404).json({ message: 'Metric not found' });
+}
+
+const category = metric.category;
+if (!category) {
+  return res.status(500).json({ message: 'Metric has no category populated' });
+}
+
+//Find the user's game account for this category's game
+const gameId = category.game;
+if (!gameId) {
+  return res.status(500).json({ message: 'Category has no game associated' });
+}
+
+const gameAccount = await GameAccount.findOne({ user: userId, game: gameId });
+if (!gameAccount) {
+  return res.status(404).json({ message: 'GameAccount for user and game not found' });
+}
+
+const puuid = gameAccount.puuid;
+if (!puuid) {
+  return res.status(400).json({ message: 'GameAccount has no puuid set' });
+}
+
+//Build param values object for the endpoint
+//Category.parameters is expected to be [{ name: "region" }, { name: "puuid" }, ...]
+const paramValues = {};
+if (Array.isArray(category.parameters)) {
+  for (const p of category.parameters) {
+    if (!p || !p.name) continue;
+    const key = p.name;
+    // Map from gameAccount fields: puuid, region, name, tag
+    if (key === 'puuid') paramValues[key] = gameAccount.puuid;
+    else if (key === 'region') paramValues[key] = gameAccount.region;
+    else if (key === 'name') paramValues[key] = gameAccount.name;
+    else if (key === 'tag') paramValues[key] = gameAccount.tag;
+    // if there are other params, you can extend this mapping later
+  }
+}
+
+//Evaluate the metric for this user
+const result = await evaluateMetricForCategory({
+  category,
+  metric,
+  paramValues,
+  identifierForPlayer: puuid, // used when metric.groupBy + metric.playerUnique
+});
+
+// result: { value, calledUrl, rawDataSample: undefined }
+return res.status(200).json({
+  metricId,
+  userId,
+  value: result.value,
+  calledUrl: result.calledUrl,
+});
+} catch (err) {
+console.error('getMetricForUser error', err);
+return res.status(500).json({ message: 'Server error', error: err.message });
+}
 };

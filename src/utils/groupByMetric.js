@@ -2,7 +2,9 @@ const getValueAtPath = require('./getValueAtPath');
 
 function groupByMetric(data, valuePath, groupPath, logicType) {
   const valueArray = getValueAtPath(data, valuePath);
+  console.log('---------value array:',valueArray);
   const groupArray = getValueAtPath(data, groupPath);
+  console.log('---------group array:',groupArray);
 
   if (!Array.isArray(valueArray) || !Array.isArray(groupArray)) return {};
 
@@ -36,6 +38,7 @@ function groupByMetric(data, valuePath, groupPath, logicType) {
       results[key] = arr.length;
     }
   }
+  console.log('----------results:',results);
 
   return results;
 }
