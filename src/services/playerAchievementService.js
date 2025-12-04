@@ -6,6 +6,10 @@ const buildEndpoint = require('../utils/buildEndpoint').buildEndpoint;
 const axios = require('axios');
 const getValueAtPath = require('../utils/getValueAtPath');
 
+async function getPlayerAchievementsByGameAccounts(gameAccountIds) {
+  return PlayerAchievement.find({ gameAccount: { $in: gameAccountIds } });
+}
+
 async function getPlayerAchievementsByGameAccount(gameAccountId) {
   return PlayerAchievement.find({ gameAccount: gameAccountId });
 }
@@ -15,7 +19,7 @@ async function getAllPlayerAchievements() {
 }
 
 async function updatePlayerAchievementProgress(achievementId, progressIncrement) {
-  const achievement = await PlayerAchievement.findById(achievementId);
+  const achievement = await PlayerAchievement.findById(achievementId).populate('achievementDefinition');
   if (!achievement) {
     const err = new Error('Achievement not found');
     err.statusCode = 404;
@@ -27,6 +31,13 @@ async function updatePlayerAchievementProgress(achievementId, progressIncrement)
     throw err;
   }
 
+  // Check if achievement definition is active
+  if (achievement.achievementDefinition && !achievement.achievementDefinition.isActive) {
+    const err = new Error('Achievement definition is not active. Progress cannot be updated.');
+    err.statusCode = 400;
+    throw err;
+  }
+
   achievement.progress += progressIncrement;
 
   if (achievement.progress >= achievement.requiredAmount) {
@@ -34,7 +45,7 @@ async function updatePlayerAchievementProgress(achievementId, progressIncrement)
     achievement.completedAt = new Date();
     // Create a record in CompletedAchievement
     const completedAchievement = new CompletedAchievement({
-      gameAccount: achievement.gameAccount, //change to game Account here and in the model
+      gameAccount: achievement.gameAccount,
       title: achievement.name,
       rewardPoints: achievement.points
     });
@@ -57,6 +68,13 @@ async function createPlayerAchievement({ gameAccountId, achievementDefinitionId 
   if (!achievementDef) {
     const err = new Error('Achievement definition not found');
     err.statusCode = 404;
+    throw err;
+  }
+
+  // Check if achievement definition is active
+  if (!achievementDef.isActive) {
+    const err = new Error('Cannot create player achievement: Achievement definition is not active');
+    err.statusCode = 400;
     throw err;
   }
 
@@ -96,7 +114,7 @@ async function createPlayerAchievement({ gameAccountId, achievementDefinitionId 
   const matches = Array.isArray(data.data) ? data.data : [];
 
   // 5) Extract current separators (e.g. metadata.matchid) so they are "already counted"
-  const separatorPath = metric.separatorPath; // "metadata.matchid"
+  const separatorPath = metric.separatorPath;
   const initialSeparators = [];
 
   if (separatorPath) {
@@ -118,7 +136,7 @@ async function createPlayerAchievement({ gameAccountId, achievementDefinitionId 
     points: achievementDef.points,
     requiredAmount: achievementDef.requiredAmount,
     progress: 0,
-    countedSeparators: initialSeparators // all existing matches are considered "old"
+    countedSeparators: initialSeparators
   });
 
   await newPlayerAchievement.save();
@@ -145,16 +163,12 @@ async function getPlayerAchievementById(id) {
   return achievement;
 }
 
-// new logic is gonna be counting the sum of non counted matchIds or in the scalable domain metricSperator
-//----------------------------------------------------------------------------------------------------------------
-
 // Refresh progress of one PlayerAchievement by scanning recent matches
 async function refreshAchievementProgress(achievementId) {
-  // 1) Get achievement id from route: /player-achievements/:achievementId/refresh
-
-  // 2) Load PlayerAchievement with its GameAccount and CategoryMetric (+ Category)
+  // 1) Load PlayerAchievement with its GameAccount, CategoryMetric, and AchievementDefinition
   const pa = await PlayerAchievement.findById(achievementId)
     .populate('gameAccount')
+    .populate('achievementDefinition')
     .populate({
       path: 'categoryMetric',
       populate: { path: 'category' }
@@ -173,6 +187,17 @@ async function refreshAchievementProgress(achievementId) {
     throw err;
   }
 
+  // Check if achievement definition is active
+  if (pa.achievementDefinition && !pa.achievementDefinition.isActive) {
+    return {
+      completed: false,
+      achievement: pa,
+      added: 0,
+      totalProgress: pa.progress,
+      message: 'Achievement definition is not active. Progress not updated.'
+    };
+  }
+
   const gameAccount = pa.gameAccount;
   const metric = pa.categoryMetric;
   const category = metric.category;
@@ -183,8 +208,7 @@ async function refreshAchievementProgress(achievementId) {
     throw err;
   }
 
-  // 3) Ensure separatorPath exists (used to uniquely identify events/matches)
-  // Example: "metadata.matchid"
+  // 3) Ensure separatorPath exists
   const separatorPath = metric.separatorPath;
   if (!separatorPath) {
     const err = new Error('separatorPath not configured for metric');
@@ -192,7 +216,7 @@ async function refreshAchievementProgress(achievementId) {
     throw err;
   }
 
-  // 4) Build API parameter values from GameAccount (region, name, tag, puuid, etc.)
+  // 4) Build API parameter values from GameAccount
   const paramValues = {};
   if (Array.isArray(category.parameters)) {
     for (const p of category.parameters) {
@@ -202,90 +226,192 @@ async function refreshAchievementProgress(achievementId) {
       else if (key === 'region') paramValues[key] = gameAccount.region;
       else if (key === 'name') paramValues[key] = gameAccount.name;
       else if (key === 'tag') paramValues[key] = gameAccount.tag;
-      // extend here if you add more fields
     }
   }
 
-  // 5) Call external API (e.g. Henrik last matches endpoint)
+  // 5) Call external API
   const finalUrl = buildEndpoint(category.endpoint, category.parameters || [], paramValues || {});
   const { data } = await axios.get(finalUrl, { headers: category.headers || {} });
 
-  // For Henrik: data.data is the array of matches
   const matches = Array.isArray(data.data) ? data.data : [];
 
-  // 6) For this refresh, track how much we add and which separators (e.g. matchids) we counted
+  // 6) Track progress
   let added = 0;
   const newSeparators = [];
 
   for (const match of matches) {
-    // 6.1) Get separator value for this match (e.g. match.metadata.matchid)
     const matchId = separatorPath
       .split('.')
       .reduce((cur, key) => (cur ? cur[key] : undefined), match);
 
     if (!matchId) continue;
 
-    // Skip if this match was already counted before
+    // Skip if already counted
     if (pa.countedSeparators && pa.countedSeparators.includes(matchId)) continue;
 
-    // 6.2) Use generic metricPath / groupBy to find this player's value in this match
-    // metric.metricPath might be "players.all_players.stats.kills"
-    // metric.groupBy might be "players.all_players.puuid"
     const valueArray = getValueAtPath(match, metric.metricPath);
     const groupArray = getValueAtPath(match, metric.groupBy);
 
     if (!Array.isArray(valueArray) || !Array.isArray(groupArray)) continue;
 
-    // Find the index where group key equals this player's puuid
     const idx = groupArray.indexOf(gameAccount.puuid);
     if (idx === -1) continue;
 
     const rawVal = valueArray[idx];
 
-    // Support values that might be plain numbers or objects with a .value
     const numericVal =
       rawVal && typeof rawVal === 'object' && 'value' in rawVal
         ? (rawVal.value || 0)
         : (rawVal || 0);
 
-    // Accumulate progress and mark this separator as counted
     added += numericVal;
     newSeparators.push(matchId);
   }
 
-  // 7) Update progress: add new kills, cap at requiredAmount
+  // 7) Update progress
   pa.progress = Math.min(pa.progress + added, pa.requiredAmount);
 
-  // Ensure countedSeparators array exists
   if (!Array.isArray(pa.countedSeparators)) {
     pa.countedSeparators = [];
   }
   pa.countedSeparators.push(...newSeparators);
 
-  // 8) If target reached, mark as completed and set timestamp
+  // 8) Check completion
+  let completedAchievement = null;
   if (pa.progress >= pa.requiredAmount) {
     pa.status = 'completed';
     pa.completedAt = new Date();
-    // Here you can also create a CompletedAchievement record as you already do
+
+    completedAchievement = new CompletedAchievement({
+      gameAccount: pa.gameAccount._id,
+      title: pa.name,
+      rewardPoints: pa.points,
+      completedAt: pa.completedAt
+    });
+    await completedAchievement.save();
+
+    await PlayerAchievement.findByIdAndDelete(achievementId);
+
+    return {
+      completed: true,
+      achievement: {
+        name: pa.name,
+        description: pa.description,
+        points: pa.points,
+        completedAt: pa.completedAt
+      },
+      completedAchievement,
+      added,
+      totalProgress: pa.progress,
+      message: 'Achievement completed and recorded!'
+    };
   }
 
-  // 9) Persist changes
+  // 9) Save if not completed
   await pa.save();
 
-  // 10) Respond with updated achievement and how much was added this refresh
   return {
+    completed: false,
     achievement: pa,
-    added,               // how much progress was added in this refresh
+    added,
     totalProgress: pa.progress
   };
 }
 
+// Refresh all PlayerAchievements for a GameAccount
+async function refreshAllAchievementsForGameAccount(gameAccountId) {
+  const gameAccount = await GameAccount.findById(gameAccountId);
+  if (!gameAccount) {
+    const err = new Error('GameAccount not found');
+    err.statusCode = 404;
+    throw err;
+  }
+
+  const playerAchievements = await PlayerAchievement.find({
+    gameAccount: gameAccountId,
+    status: { $ne: 'completed' }
+  });
+
+  if (playerAchievements.length === 0) {
+    return {
+      message: 'No active achievements to refresh',
+      totalAchievements: 0,
+      refreshed: 0,
+      completed: 0,
+      failed: 0,
+      skipped: 0,
+      results: []
+    };
+  }
+
+  const results = [];
+  let refreshedCount = 0;
+  let completedCount = 0;
+  let failedCount = 0;
+  let skippedCount = 0;
+
+  for (const pa of playerAchievements) {
+    try {
+      const result = await refreshAchievementProgress(pa._id.toString());
+      
+      if (result.message && result.message.includes('not active')) {
+        // Achievement was skipped because definition is inactive
+        results.push({
+          achievementId: pa._id,
+          achievementName: pa.name,
+          success: true,
+          skipped: true,
+          reason: 'Achievement definition is not active'
+        });
+        skippedCount++;
+      } else {
+        results.push({
+          achievementId: pa._id,
+          achievementName: pa.name,
+          success: true,
+          completed: result.completed,
+          added: result.added,
+          totalProgress: result.totalProgress,
+          ...(result.completed && { completedAchievement: result.completedAchievement })
+        });
+
+        refreshedCount++;
+        if (result.completed) {
+          completedCount++;
+        }
+      }
+    } catch (error) {
+      console.error(`Failed to refresh achievement ${pa._id}:`, error.message);
+      results.push({
+        achievementId: pa._id,
+        achievementName: pa.name,
+        success: false,
+        error: error.message
+      });
+      failedCount++;
+    }
+  }
+
+  return {
+    message: 'Bulk refresh completed',
+    gameAccountId,
+    totalAchievements: playerAchievements.length,
+    refreshed: refreshedCount,
+    completed: completedCount,
+    failed: failedCount,
+    skipped: skippedCount,
+    results
+  };
+}
+
 module.exports = {
+  getPlayerAchievementsByGameAccounts,
   getPlayerAchievementsByGameAccount,
   getAllPlayerAchievements,
   updatePlayerAchievementProgress,
   createPlayerAchievement,
   deletePlayerAchievement,
   getPlayerAchievementById,
-  refreshAchievementProgress
+  refreshAchievementProgress,
+  refreshAllAchievementsForGameAccount
 };

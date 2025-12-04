@@ -22,7 +22,7 @@ router.delete('/:categoryId', adminMiddleware, deleteCategory);
 
 // Public routes
 router.get('/', getAllCategories);
-router.get('/:categoryId', getCategoryById);      // Get one category by ID
-router.get('/game/:gameId', getCategoryByGame);   // Get categories for a specific game
+router.get('/:categoryId', getCategoryById);
+router.get('/game/:gameId', getCategoryByGame);
 
 module.exports = router;

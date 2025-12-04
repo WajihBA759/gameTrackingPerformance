@@ -89,3 +89,40 @@ exports.refreshAchievementProgress = async (req, res) => {
     });
   }
 };
+exports.refreshAllAchievementsForGameAccount = async (req, res) => {
+  try {
+    const { gameAccountId } = req.params;
+    const result = await playerAchievementService.refreshAllAchievementsForGameAccount(gameAccountId);
+    return res.status(200).json(result);
+  } catch (err) {
+    console.error('refreshAllAchievementsForGameAccount error', err);
+    return res.status(err.statusCode || 500).json({
+      message: err.statusCode ? err.message : 'Server error',
+      error: err.message
+    });
+  }
+};
+// In playerAchievementController.js
+exports.getPlayerAchievementsByUsername = async (req, res) => {
+  try {
+    const { username } = req.params;
+    const User = require('../models/user');
+    const user = await User.findOne({ username });
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    const GameAccount = require('../models/gameAccount');
+    const gameAccounts = await GameAccount.find({ user: user._id });
+    const gameAccountIds = gameAccounts.map(ga => ga._id);
+    
+    const achievements = await playerAchievementService.getPlayerAchievementsByGameAccounts(gameAccountIds);
+    res.status(200).send(achievements);
+  } catch (error) {
+    console.error('getPlayerAchievementsByUsername error:', error);
+    res.status(error.statusCode || 500).send({ message: 'Server error', error: error.message });
+  }
+};
+
+

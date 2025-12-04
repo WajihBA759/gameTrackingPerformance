@@ -78,3 +78,27 @@ exports.updateCompletedAchievement = async (req, res) => {
       .send({ message: 'Server error', error: error.message });
   }
 };
+// controllers/completedAchievementController.js
+
+exports.getCompletedAchievementsByUsername = async (req, res) => {
+  try {
+    const { username } = req.params;
+    const achievements = await completedAchievementService.getCompletedAchievementsByUsername(username);
+    res.status(200).json(achievements);
+  } catch (error) {
+    console.error('getCompletedAchievementsByUsername error:', error);
+    res.status(error.statusCode || 500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+exports.getCompletedAchievementsByGameAccount = async (req, res) => {
+  try {
+    const { gameAccountId } = req.params;
+    const achievements = await completedAchievementService.getCompletedAchievementsByGameAccount(gameAccountId);
+    res.status(200).json(achievements);
+  } catch (error) {
+    console.error('getCompletedAchievementsByGameAccount error:', error);
+    res.status(error.statusCode || 500).json({ message: 'Server error', error: error.message });
+  }
+};
+

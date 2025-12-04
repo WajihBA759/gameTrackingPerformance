@@ -71,3 +71,13 @@ exports.deleteGameAccount = async (req, res) => {
       .json({ message: err.statusCode ? err.message : 'Server error', error: err.message });
   }
 };
+exports.getGameAccountTotalPoints = async (req, res) => {
+  try {
+    const { gameAccountId } = req.params;
+    const result = await gameAccountService.getGameAccountTotalPoints(gameAccountId);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('getGameAccountTotalPoints error:', error);
+    res.status(error.statusCode || 500).json({ message: 'Server error', error: error.message });
+  }
+};

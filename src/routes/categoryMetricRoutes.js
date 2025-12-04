@@ -13,7 +13,7 @@ router.get('/metrics/:metricId/user/:userId', categoryMetricController.getMetric
 //More specific routes FIRST, generic routes LAST
 router.post('/initialize', adminMiddleware, categoryMetricController.initializeCategoryMetrics);
 router.post('/evaluate', categoryMetricController.evaluateMetric);
-router.get('/category/:categoryId', categoryMetricController.getCategoryMetricsByCategory); // Specific route
+router.get('/category/:categoryId', categoryMetricController.getCategoryMetricsByCategory);
 router.get('/', categoryMetricController.getAllCategoryMetrics);
 router.post('/', adminMiddleware, categoryMetricController.createCategoryMetric);
 

@@ -1,6 +1,7 @@
 // services/gameAccountService.js
 const GameAccount = require('../models/gameAccount');
 const Game = require('../models/game');
+const CompletedAchievement = require('../models/completedAchievement');
 const { validateGameAccountIdentifiers } = require('../utils/validateGameAccountParams');
 
 async function createGameAccount(data) {
@@ -113,10 +114,37 @@ async function deleteGameAccount(id) {
   return { message: 'GameAccount deleted' };
 }
 
+// Get total points for a game account by summing completed achievements
+async function getGameAccountTotalPoints(gameAccountId) {
+  const ga = await GameAccount.findById(gameAccountId);
+  if (!ga) {
+    const err = new Error('GameAccount not found');
+    err.statusCode = 404;
+    throw err;
+  }
+
+  // Aggregate sum of rewardPoints from CompletedAchievements
+  const result = await CompletedAchievement.aggregate([
+    { $match: { gameAccount: ga._id } },
+    { $group: { _id: null, totalPoints: { $sum: '$rewardPoints' } } }
+  ]);
+
+  const totalPoints = result.length > 0 ? result[0].totalPoints : 0;
+
+  return {
+    gameAccountId: ga._id,
+    user: ga.user,
+    game: ga.game,
+    totalPoints,
+    completedAchievementsCount: await CompletedAchievement.countDocuments({ gameAccount: ga._id })
+  };
+}
+
 module.exports = {
   createGameAccount,
   getGameAccountById,
   getGameAccountsForUser,
   updateGameAccount,
-  deleteGameAccount
+  deleteGameAccount,
+  getGameAccountTotalPoints
 };

@@ -14,6 +14,7 @@ const indexRoutes=require('./routes/index');
 const achievementDefinitionRoutes=require('./routes/achievementDefinitionRoutes');
 const adminAuthViewRoutes = require('./viewRoutes/adminAuthViewRoutes');
 const achievementDefinitionViewRoutes = require('./viewRoutes/achievementDefinitionViewRoutes');
+const completedAchievementRoutes = require('./routes/completedAchievementRoutes');
 dotenv.config();//loads environment variables from .env file
 const app = express();
 app.use(
@@ -28,6 +29,7 @@ app.set('view engine', 'ejs');
 app.set('views', './views'); 
 //middleware to parse JSON request bodies
 app.use(express.json());
+app.use('/api/completed-achievements', completedAchievementRoutes);
 app.use('/api/category-metrics', categoryMetricRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/user',userRoutes);

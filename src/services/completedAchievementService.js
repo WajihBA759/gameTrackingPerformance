@@ -1,9 +1,7 @@
 // services/completedAchievementService.js
 const CompletedAchievement = require('../models/completedAchievement');
-
-async function getCompletedAchievementsByGameAccount(gameAccountId) {
-  return CompletedAchievement.find({ gameAccount: gameAccountId });
-}
+const GameAccount = require('../models/gameAccount');
+const User = require('../models/user');
 
 async function getAllCompletedAchievements() {
   return CompletedAchievement.find();
@@ -52,6 +50,41 @@ async function updateCompletedAchievement(id, { title, rewardPoints }) {
   }
   return updatedAchievement;
 }
+async function getCompletedAchievementsByUsername(username) {
+  // Find user by username
+  const user = await User.findOne({ username });
+  if (!user) {
+    const err = new Error('User not found');
+    err.statusCode = 404;
+    throw err;
+  }
+
+  // Find all game accounts for this user
+  const gameAccounts = await GameAccount.find({ user: user._id });
+  const gameAccountIds = gameAccounts.map(ga => ga._id);
+
+  // Find all completed achievements for these game accounts
+  const achievements = await CompletedAchievement.find({
+    gameAccount: { $in: gameAccountIds }
+  }).populate('gameAccount', 'name region game');
+
+  return achievements;
+}
+
+async function getCompletedAchievementsByGameAccount(gameAccountId) {
+  const gameAccount = await GameAccount.findById(gameAccountId);
+  if (!gameAccount) {
+    const err = new Error('Game account not found');
+    err.statusCode = 404;
+    throw err;
+  }
+
+  const achievements = await CompletedAchievement.find({
+    gameAccount: gameAccountId
+  }).populate('gameAccount', 'name region game');
+
+  return achievements;
+}
 
 module.exports = {
   getCompletedAchievementsByGameAccount,
@@ -59,5 +92,6 @@ module.exports = {
   getCompletedAchievementById,
   createCompletedAchievement,
   deleteCompletedAchievement,
-  updateCompletedAchievement
+  updateCompletedAchievement,
+  getCompletedAchievementsByUsername
 };
