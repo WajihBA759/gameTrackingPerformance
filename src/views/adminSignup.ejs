@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Signup</title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #111827; color: #f9fafb; display:flex; align-items:center; justify-content:center; min-height:100vh; }
+    .card { background:#1f2937; padding:32px; border-radius:12px; width:100%; max-width:400px; box-shadow:0 10px 30px rgba(0,0,0,.5); }
+    h1 { margin-bottom:8px; }
+    p { margin-bottom:24px; color:#9ca3af; }
+    .form-group { margin-bottom:16px; }
+    label { display:block; margin-bottom:6px; font-size:.9rem; }
+    input { width:100%; padding:10px 12px; border-radius:6px; border:1px solid #4b5563; background:#111827; color:#f9fafb; }
+    input:focus { outline:none; border-color:#6366f1; }
+    .btn { width:100%; padding:10px 12px; border:none; border-radius:6px; background:#4f46e5; color:white; font-weight:600; cursor:pointer; margin-top:8px; }
+    .btn:hover { background:#4338ca; }
+    .link { margin-top:12px; font-size:.9rem; text-align:center; }
+    .link a { color:#60a5fa; text-decoration:none; }
+    .link a:hover { text-decoration:underline; }
+    .alert { margin-bottom:12px; padding:8px 10px; border-radius:6px; font-size:.9rem; display:none; }
+    .alert-error { background:#b91c1c; color:#fee2e2; }
+    .alert-success { background:#14532d; color:#bbf7d0; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Admin Signup</h1>
+    <p>Create a moderator account for the backoffice</p>
+
+    <div id="alert" class="alert"></div>
+
+    <form id="signupForm">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input id="username" required />
+      </div>
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input id="email" type="email" required />
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input id="password" type="password" required />
+      </div>
+      <button type="submit" class="btn">Sign up as Admin</button>
+    </form>
+
+    <div class="link">
+      Already have an account? <a href="/admin/login">Login</a>
+    </div>
+  </div>
+
+  <script>
+    const alertBox = document.getElementById('alert');
+
+    function showAlert(msg, type) {
+      alertBox.textContent = msg;
+      alertBox.className = 'alert alert-' + type;
+      alertBox.style.display = 'block';
+    }
+
+    document.getElementById('signupForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      alertBox.style.display = 'none';
+
+      const body = {
+        username: document.getElementById('username').value,
+        email: document.getElementById('email').value,
+        password: document.getElementById('password').value,
+        role: 'admin' // force admin role
+      };
+
+      try {
+        const res = await fetch('http://localhost:5000/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          showAlert(data.message || 'Signup failed', 'error');
+          return;
+        }
+
+        // if your /register returns a token, store it; if not, do a login call next
+        if (data.token) {
+          localStorage.setItem('token', data.token);
+        }
+
+        showAlert('Signup successful! Redirecting...', 'success');
+        setTimeout(() => { window.location.href = '/'; }, 1500);
+      } catch (err) {
+        console.error(err);
+        showAlert('Network error', 'error');
+      }
+    });
+  </script>
+</body>
+</html>

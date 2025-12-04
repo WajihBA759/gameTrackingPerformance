@@ -31,7 +31,7 @@ const CategoryMetricSchema = new Schema({
     playerUnique:{
         type:Boolean,
         required:true,
-        default:false,
+        default:true,
     },
     separatorPath: { type: String }
 });

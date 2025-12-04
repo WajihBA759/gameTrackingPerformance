@@ -1,83 +1,78 @@
-const category=require('../models/category');
+// controllers/categoryController.js
+const categoryService = require('../services/categoryService');
 
-exports.createCategory=async(req,res)=>{
-    const { name, endpoint, game,headers, parameters } = req.body;
-    try {
-        const existingCategory = await category.findOne({ name });
-        if (existingCategory) {
-            return res.status(400).json({ message: 'Category already exists' });
-        }
-        let newEnedpoint = endpoint;
-        for (const param of parameters) {
-            newEnedpoint = newEnedpoint+`/{${param.name}}`;
-        }
-        const newCategory = new category({ name, endpoint:newEnedpoint, game, headers, parameters });
-        await newCategory.save();
-        res.status(201).json({ message: 'Category created successfully' });
-    } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
-    }
+exports.createCategory = async (req, res) => {
+  try {
+    const result = await categoryService.createCategory(req.body);
+    res.status(201).json(result);
+  } catch (error) {
+    console.error('createCategory error:', error);
+    res
+      .status(error.statusCode || 500)
+      .json({ message: 'Server error', error: error.message });
+  }
 };
-exports.getAllCategories=async(req,res)=>{
-    try {
-        const categories = await category.find();
-        res.status(200).json(categories);
-    } catch (error) {
-        res.status(500).json({ message: 'Server error' });
-    }
+
+exports.getAllCategories = async (req, res) => {
+  try {
+    const categories = await categoryService.getAllCategories();
+    res.status(200).json(categories);
+  } catch (error) {
+    console.error('getAllCategories error:', error);
+    res
+      .status(error.statusCode || 500)
+      .json({ message: 'Server error', error: error.message });
+  }
 };
-exports.updateCategory=async(req,res)=>{
+
+exports.updateCategory = async (req, res) => {
+  try {
     const { categoryId } = req.params;
-    const { name, endpoint, headers, parameters } = req.body;
-    try {
-        const category = await category.findById(categoryId);
-        if (!category) {
-            return res.status(404).json({ message: 'Category not found' });
-        }
-        category.name = name;
-        category.parameters = parameters;
-        let newEnedpoint = endpoint;
-        for (const param of parameters) {
-            newEnedpoint = newEnedpoint+`/{${param.name}}`;
-        }
-        category.endpoint = newEnedpoint;
-        category.headers = headers;
-        await category.save();
-        res.status(200).json({ message: 'Category updated successfully' });
-    } catch (error) {
-        res.status(500).json({ message: 'Server error' });
-    }
+    const result = await categoryService.updateCategory(categoryId, req.body);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('updateCategory error:', error);
+    res
+      .status(error.statusCode || 500)
+      .json({ message: 'Server error', error: error.message });
+  }
 };
-exports.deleteCategory=async(req,res)=>{
+
+exports.deleteCategory = async (req, res) => {
+  try {
     const { categoryId } = req.params;
-    try {
-        const category = await category.findByIdAndDelete(categoryId);
-        if (!category) {
-            return res.status(404).json({ message: 'Category not found' });
-        }
-        res.status(200).json({ message: 'Category deleted successfully' });
-    } catch (error) {
-        res.status(500).json({ message: 'Server error' });
-    }
+    const result = await categoryService.deleteCategory(categoryId);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('deleteCategory error:', error);
+    res
+      .status(error.statusCode || 500)
+      .json({ message: 'Server error', error: error.message });
+  }
 };
-exports.getCategoryById=async(req,res)=>{
+
+exports.getCategoryById = async (req, res) => {
+  try {
     const { categoryId } = req.params;
-    try {
-        const categoryData = await category.findById(categoryId);
-        if (!categoryData) {
-            return res.status(404).json({ message: 'Category not found' });
-        }
-        res.status(200).json(categoryData);
-    } catch (error) {
-        res.status(500).json({ message: 'Server error' });
-    }
+    const category = await categoryService.getCategoryById(categoryId);
+    res.status(200).json(category);
+  } catch (error) {
+    console.error('getCategoryById error:', error);
+    res
+      .status(error.statusCode || 500)
+      .json({ message: 'Server error', error: error.message });
+  }
 };
-exports.getCategoryByGame=async(req,res)=>{
+
+exports.getCategoryByGame = async (req, res) => {
+  try {
     const { gameId } = req.params;
-    try {
-        const categories = await category.find({ game: gameId });
-        res.status(200).json(categories);
-    } catch (error) {
-        res.status(500).json({ message: 'Server error' });
-    }
+    const categories = await categoryService.getCategoryByGame(gameId);
+    res.status(200).json(categories);
+  } catch (error) {
+    console.error('getCategoryByGame error:', error);
+    res
+      .status(error.statusCode || 500)
+      .json({ message: 'Server error', error: error.message });
+  }
 };

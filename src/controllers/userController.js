@@ -1,135 +1,110 @@
-const User=require('../models/user');
-const GameAccount=require('../models/gameAccount');
+// controllers/userController.js
+const userService = require('../services/userService');
 
-exports.assignAdminRole=async(req,res)=>{
+exports.assignAdminRole = async (req, res) => {
+  try {
     const { userId } = req.params;
-    try {
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        user.role = 'admin';
-        await user.save();
-        res.status(200).json({ message: 'User promoted to admin successfully' });
-    } catch (error) {
-        res.status(500).json({ message: 'Server error' });
-    }
+    const result = await userService.assignAdminRole(userId);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('assignAdminRole error:', error);
+    res.status(error.statusCode || 500).json({ message: 'Server error', error: error.message });
+  }
 };
-exports.addUser=async(req,res)=>{
-    const { username, email, password } = req.body;
-    try {
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            return res.status(400).json({ message: 'User already exists' });
-        }
-        const newUser = new User({ username, email, password });
-        await newUser.save();
-        res.status(201).json({ message: 'User added successfully' });
-    } catch (error) {
-        res.status(500).json({ message: 'Server error' });
-    }
+
+exports.addUser = async (req, res) => {
+  try {
+    const result = await userService.addUser(req.body);
+    res.status(201).json(result);
+  } catch (error) {
+    console.error('addUser error:', error);
+    res.status(error.statusCode || 500).json({ message: 'Server error', error: error.message });
+  }
 };
-exports.updateUser=async(req,res)=>{
+
+exports.updateUser = async (req, res) => {
+  try {
     const { userId } = req.params;
-    const { username, email, privacy } = req.body;
-    try {
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        user.username = username;
-        user.email = email;
-        user.privacy = privacy;
-        await user.save();
-        res.status(200).json({ message: 'User updated successfully' });
-    } catch (error) {
-        res.status(500).json({ message: 'Server error' });
-    }
+    const result = await userService.updateUser(userId, req.body);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('updateUser error:', error);
+    res.status(error.statusCode || 500).json({ message: 'Server error', error: error.message });
+  }
 };
-exports.deleteUser=async(req,res)=>{
+
+exports.deleteUser = async (req, res) => {
+  try {
     const { userId } = req.params;
-    try {
-        const user = await User.findByIdAndDelete(userId);
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        res.status(200).json({ message: 'User deleted successfully' });
-    } catch (error) {
-        res.status(500).json({ message: 'Server error' });
-    }
+    const result = await userService.deleteUser(userId);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('deleteUser error:', error);
+    res.status(error.statusCode || 500).json({ message: 'Server error', error: error.message });
+  }
 };
-exports.getAllUsers=async(req,res)=>{
-    try {
-        const users = await User.find().select('-password');
-        res.status(200).json(users);
-    } catch (error) {
-        res.status(500).json({ message: 'Server error' });
-    }
+
+exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await userService.getAllUsers();
+    res.status(200).json(users);
+  } catch (error) {
+    console.error('getAllUsers error:', error);
+    res.status(error.statusCode || 500).json({ message: 'Server error', error: error.message });
+  }
 };
-exports.getProfileByUsername=async(req,res)=>{
+
+exports.getProfileByUsername = async (req, res) => {
+  try {
     const { username } = req.params;
-    try {
-        const user = await User.findOne({ username }).select('-password');
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        const gameAccounts = await GameAccount.find({ user: user._id })
-        .populate('game','name description');//to be changed later if adding categories
-        res.status(200).json({ user, gameAccounts });
-    } catch (error) {
-        res.status(500).json({ message: 'Server error' });
-    }
+    const profile = await userService.getProfileByUsername(username);
+    res.status(200).json(profile);
+  } catch (error) {
+    console.error('getProfileByUsername error:', error);
+    res.status(error.statusCode || 500).json({ message: 'Server error', error: error.message });
+  }
 };
-exports.getUserById=async(req,res)=>{
+
+exports.getUserById = async (req, res) => {
+  try {
     const { userId } = req.params;
-    try {
-        const user = await User.findById(userId).select('-password');
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        res.status(200).json(user);
-    } catch (error) {
-        res.status(500).json({ message: 'Server error' });
-    }
+    const user = await userService.getUserById(userId);
+    res.status(200).json(user);
+  } catch (error) {
+    console.error('getUserById error:', error);
+    res.status(error.statusCode || 500).json({ message: 'Server error', error: error.message });
+  }
 };
-exports.getFriendsList=async(req,res)=>{
+
+exports.getFriendsList = async (req, res) => {
+  try {
     const { userId } = req.params;
-    try {
-        const user = await User.findById(userId).populate('friends','username email');
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        res.status(200).json(user.friends);
-    } catch (error) {
-        res.status(500).json({ message: 'Server error' });
-    }
+    const friends = await userService.getFriendsList(userId);
+    res.status(200).json(friends);
+  } catch (error) {
+    console.error('getFriendsList error:', error);
+    res.status(error.statusCode || 500).json({ message: 'Server error', error: error.message });
+  }
 };
-exports.addFriend=async(req,res)=>{
+
+exports.addFriend = async (req, res) => {
+  try {
     const { userId, friendId } = req.params;
-    try {
-        const user = await User.findById(userId);
-        const friend = await User.findById(friendId);
-        if (!user || !friend) {
-            return res.status(404).json({ message: 'User or friend not found' });
-        }
-        user.friends.push(friend._id);
-        await user.save();
-        res.status(200).json({ message: 'Friend added successfully' });
-    } catch (error) {
-        res.status(500).json({ message: 'Server error' });
-    }
+    const result = await userService.addFriend(userId, friendId);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('addFriend error:', error);
+    res.status(error.statusCode || 500).json({ message: 'Server error', error: error.message });
+  }
 };
-exports.removeFriend=async(req,res)=>{
+
+exports.removeFriend = async (req, res) => {
+  try {
     const { userId, friendId } = req.params;
-    try {
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        user.friends.pull(friendId);
-        await user.save();
-        res.status(200).json({ message: 'Friend removed successfully' });
-    } catch (error) {
-        res.status(500).json({ message: 'Server error' });
-    }
+    const result = await userService.removeFriend(userId, friendId);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('removeFriend error:', error);
+    res.status(error.statusCode || 500).json({ message: 'Server error', error: error.message });
+  }
 };

@@ -6,9 +6,10 @@ const router = express.Router();
 const {
   createAchievementDefinition,
   getAllAchievementDefinitions,
-  getAchievementDefinitionById,
   updateAchievementDefinition,
-  deleteAchievementDefinition
+  deleteAchievementDefinition,
+  getAchievementDefinitionById,
+  getAchievementDefinitionsByCategory
 } = require('../controllers/achievementDefinitionController');
 
 
@@ -25,11 +26,18 @@ router.post('/', createAchievementDefinition);
 // List all definitions
 router.get('/', getAllAchievementDefinitions);
 
+router.get('/:achievementId', getAchievementDefinitionById);
+
 
 // Update
 router.put('/:achievementId', updateAchievementDefinition);
 
 // Delete
 router.delete('/:achievementId', deleteAchievementDefinition);
+
+router.get('/category/:categoryId', getAchievementDefinitionsByCategory);
+
+
+
 
 module.exports = router;

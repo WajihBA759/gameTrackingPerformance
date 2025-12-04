@@ -12,6 +12,8 @@ const gameAccountRoutes=require('./routes/gameAccountRoutes');
 const playerAchievementRoutes=require('./routes/playerAchievementRoutes');
 const indexRoutes=require('./routes/index');
 const achievementDefinitionRoutes=require('./routes/achievementDefinitionRoutes');
+const adminAuthViewRoutes = require('./viewRoutes/adminAuthViewRoutes');
+const achievementDefinitionViewRoutes = require('./viewRoutes/achievementDefinitionViewRoutes');
 dotenv.config();//loads environment variables from .env file
 const app = express();
 app.use(
@@ -35,7 +37,10 @@ app.use('/api/player-achievements',playerAchievementRoutes);
 app.use('/api/achievement-definition',achievementDefinitionRoutes);
 
 //view routes
+app.use('/', achievementDefinitionViewRoutes);
+app.use('/', adminAuthViewRoutes);
 app.use('/', indexRoutes);
+
 
 
 app.use('/api/categories',CategoryRoutes);

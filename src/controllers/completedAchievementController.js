@@ -1,76 +1,80 @@
-const CompletedAchievement = require('../models/completedAchievement');
-const PlayerAchievement = require('../models/playerAchievement');
-const AchievementDefinition = require('../models/achievementDefinition');
+// controllers/completedAchievementController.js
+const completedAchievementService = require('../services/completedAchievementService');
 
 exports.getCompletedAchievementsByGameAccount = async (req, res) => {
-    try {
-        const gameAccountId = req.params.gameAccountId;
-        const completedAchievements = await CompletedAchievement.find({ gameAccount: gameAccountId });
-        res.status(200).send(completedAchievements);
-    } catch (error) {
-        res.status(500).send({ message: 'Server error', error });
-    }
+  try {
+    const { gameAccountId } = req.params;
+    const completed = await completedAchievementService.getCompletedAchievementsByGameAccount(
+      gameAccountId
+    );
+    res.status(200).send(completed);
+  } catch (error) {
+    console.error('getCompletedAchievementsByGameAccount error:', error);
+    res
+      .status(error.statusCode || 500)
+      .send({ message: 'Server error', error: error.message });
+  }
 };
+
 exports.getAllCompletedAchievements = async (req, res) => {
-    try {
-        const completedAchievements = await CompletedAchievement.find();
-        res.status(200).send(completedAchievements);
-    } catch (error) {
-        res.status(500).send({ message: 'Server error', error });
-    }
+  try {
+    const completed = await completedAchievementService.getAllCompletedAchievements();
+    res.status(200).send(completed);
+  } catch (error) {
+    console.error('getAllCompletedAchievements error:', error);
+    res
+      .status(error.statusCode || 500)
+      .send({ message: 'Server error', error: error.message });
+  }
 };
+
 exports.getCompletedAchievementById = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const completedAchievement = await CompletedAchievement.findById(id);
-        if (!completedAchievement) {
-            return res.status(404).send({ message: 'Completed achievement not found' });
-        }
-        res.status(200).send(completedAchievement);
-    } catch (error) {
-        res.status(500).send({ message: 'Server error', error });
-    }
+  try {
+    const { id } = req.params;
+    const completed = await completedAchievementService.getCompletedAchievementById(id);
+    res.status(200).send(completed);
+  } catch (error) {
+    console.error('getCompletedAchievementById error:', error);
+    res
+      .status(error.statusCode || 500)
+      .send({ message: 'Server error', error: error.message });
+  }
 };
+
 exports.createCompletedAchievement = async (req, res) => {
-    try {
-        const { gameAccountId, title, rewardPoints } = req.body;
-        const newCompletedAchievement = new CompletedAchievement({
-            gameAccount: gameAccountId,
-            title,
-            rewardPoints
-        });
-        await newCompletedAchievement.save();
-        res.status(200).send(newCompletedAchievement);
-    } catch (error) {
-        res.status(500).send({ message: 'Server error', error });
-    }
+  try {
+    const completed = await completedAchievementService.createCompletedAchievement(req.body);
+    res.status(200).send(completed);
+  } catch (error) {
+    console.error('createCompletedAchievement error:', error);
+    res
+      .status(error.statusCode || 500)
+      .send({ message: 'Server error', error: error.message });
+  }
 };
+
 exports.deleteCompletedAchievement = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const deletedAchievement = await CompletedAchievement.findByIdAndDelete(id);
-        if (!deletedAchievement) {
-            return res.status(404).send({ message: 'Completed achievement not found' });
-        }
-        res.status(200).send({ message: 'Completed achievement deleted successfully' });
-    } catch (error) {
-        res.status(500).send({ message: 'Server error', error });
-    }
+  try {
+    const { id } = req.params;
+    const result = await completedAchievementService.deleteCompletedAchievement(id);
+    res.status(200).send(result);
+  } catch (error) {
+    console.error('deleteCompletedAchievement error:', error);
+    res
+      .status(error.statusCode || 500)
+      .send({ message: 'Server error', error: error.message });
+  }
 };
+
 exports.updateCompletedAchievement = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { title, rewardPoints } = req.body;
-        const updatedAchievement = await CompletedAchievement.findByIdAndUpdate(
-            id,
-            { title, rewardPoints },
-            { new: true }
-        );
-        if (!updatedAchievement) {
-            return res.status(404).send({ message: 'Completed achievement not found' });
-        }
-        res.status(200).send(updatedAchievement);
-    } catch (error) {
-        res.status(500).send({ message: 'Server error', error });
-    }
+  try {
+    const { id } = req.params;
+    const updated = await completedAchievementService.updateCompletedAchievement(id, req.body);
+    res.status(200).send(updated);
+  } catch (error) {
+    console.error('updateCompletedAchievement error:', error);
+    res
+      .status(error.statusCode || 500)
+      .send({ message: 'Server error', error: error.message });
+  }
 };

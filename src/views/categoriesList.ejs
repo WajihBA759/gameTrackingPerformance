@@ -252,6 +252,7 @@
                         <div class="category-actions">
                             <a href="/categories/edit/<%= category._id %>" class="btn btn-edit">Edit</a>
                             <a href="/categories/<%= category._id %>/metrics" class="btn btn-metrics">Manage Metrics</a>
+                            <a href="/categories/<%= category._id %>/achievements" class="btn btn-secondary">🏆 Achievements</a>
                             <button 
                                 class="btn btn-delete" 
                                 onclick="deleteCategory('<%= category._id %>', '<%= category.name %>')">
