@@ -241,7 +241,7 @@
 </head>
 <body>
     <div class="container">
-        <a href="/categories/game/<%= game._id %>" class="back-link">← Back to Categories</a>
+        <a href="/admin/categories/game/<%= game._id %>" class="back-link">← Back to Categories</a>
         
         <h1>📁 Add Category</h1>
         <div class="game-badge">Game: <%= game.name %></div>
@@ -318,7 +318,7 @@
             
             <div>
                 <button type="submit" class="btn btn-primary">Create Category</button>
-                <button type="button" class="btn btn-secondary" onclick="window.location.href='/categories/game/<%= game._id %>'">
+                <button type="button" class="btn btn-secondary" onclick="window.location.href='/admin/categories/game/<%= game._id %>'">
                     Cancel
                 </button>
             </div>
@@ -549,22 +549,22 @@
                 
                 if (response.ok) {
                     alert(`Success! ${data.totalMetrics} metrics initialized.`);
-                    window.location.href = `/categories/game/${document.getElementById('gameId').value}`;
+                    window.location.href = `/admin/categories/game/${document.getElementById('gameId').value}`;
                 } else {
                     loading.style.display = 'none';
                     alert('Failed to initialize metrics: ' + data.message);
-                    window.location.href = `/categories/game/${document.getElementById('gameId').value}`;
+                    window.location.href = `/admin/categories/game/${document.getElementById('gameId').value}`;
                 }
             } catch (error) {
                 loading.style.display = 'none';
                 alert('Error initializing metrics');
-                window.location.href = `/categories/game/${document.getElementById('gameId').value}`;
+                window.location.href = `/admin/categories/game/${document.getElementById('gameId').value}`;
             }
         }
         
         function skipInitialization() {
             modal.style.display = 'none';
-            window.location.href = `/categories/game/${document.getElementById('gameId').value}`;
+            window.location.href = `/admin/categories/game/${document.getElementById('gameId').value}`;
         }
         
         function showAlert(message, type) {

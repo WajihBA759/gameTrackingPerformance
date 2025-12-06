@@ -1,7 +1,7 @@
 const Game = require('../models/game');
 
 async function createGame(data) {
-  const { name, description } = data;
+  const { name, description, identifierKey } = data;
 
   const existingGame = await Game.findOne({ name });
   if (existingGame) {
@@ -10,7 +10,7 @@ async function createGame(data) {
     throw err;
   }
 
-  const newGame = new Game({ name, description });
+  const newGame = new Game({ name, description, identifierKey });
   await newGame.save();
 
   return { message: 'Game created successfully', game: newGame };
@@ -21,7 +21,7 @@ async function getAllGames() {
 }
 
 async function updateGame(gameId, data) {
-  const { name, description } = data;
+  const { name, description, identifierKey } = data;
 
   const gameData = await Game.findById(gameId);
   if (!gameData) {
@@ -32,6 +32,7 @@ async function updateGame(gameId, data) {
 
   gameData.name = name;
   gameData.description = description;
+  gameData.identifierKey= identifierKey;
   await gameData.save();
 
   return { message: 'Game updated successfully', game: gameData };

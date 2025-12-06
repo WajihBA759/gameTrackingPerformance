@@ -69,6 +69,12 @@
             min-height: 100px;
         }
         
+        .help-text {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 5px;
+        }
+        
         .btn {
             padding: 12px 30px;
             border: none;
@@ -154,7 +160,7 @@
 </head>
 <body>
     <div class="container">
-        <a href="/games" class="back-link">← Back to Games</a>
+        <a href="/admin/games" class="back-link">← Back to Games</a>
         
         <h1>🎮 Add New Game</h1>
         <p class="subtitle">Add a new game to track performance</p>
@@ -174,6 +180,18 @@
             </div>
             
             <div class="form-group">
+                <label for="identifierKey">Identifier Key *</label>
+                <input 
+                    type="text" 
+                    id="identifierKey" 
+                    name="identifierKey" 
+                    placeholder="e.g., valorant (lowercase, no spaces)" 
+                    required
+                >
+                <div class="help-text">A unique identifier for API calls (lowercase, use hyphens instead of spaces)</div>
+            </div>
+            
+            <div class="form-group">
                 <label for="description">Description</label>
                 <textarea 
                     id="description" 
@@ -184,7 +202,7 @@
             
             <div>
                 <button type="submit" class="btn btn-primary">Add Game</button>
-                <button type="button" class="btn btn-secondary" onclick="window.location.href='/games'">
+                <button type="button" class="btn btn-secondary" onclick="window.location.href='/admin/games'">
                     Cancel
                 </button>
             </div>
@@ -200,20 +218,29 @@
         const form = document.getElementById('addGameForm');
         const alertBox = document.getElementById('alertBox');
         const loading = document.getElementById('loading');
+        const nameInput = document.getElementById('name');
+        const identifierInput = document.getElementById('identifierKey');
         
-        // Get token from localStorage (assuming you store it after login)
+        // Auto-generate identifier key from name
+        nameInput.addEventListener('input', () => {
+            const identifier = nameInput.value
+                .toLowerCase()
+                .replace(/\s+/g, '-')
+                .replace(/[^a-z0-9-]/g, '');
+            identifierInput.value = identifier;
+        });
+        
         const token = localStorage.getItem('token') || 'YOUR_JWT_TOKEN_HERE';
         
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            // Get form data
             const formData = {
                 name: document.getElementById('name').value,
+                identifierKey: document.getElementById('identifierKey').value,
                 description: document.getElementById('description').value
             };
             
-            // Show loading
             loading.style.display = 'block';
             form.style.display = 'none';
             alertBox.style.display = 'none';
@@ -230,21 +257,17 @@
                 
                 const data = await response.json();
                 
-                // Hide loading
                 loading.style.display = 'none';
                 form.style.display = 'block';
                 
                 if (response.ok) {
-                    // Success
                     showAlert(data.message || 'Game created successfully!', 'success');
                     form.reset();
                     
-                    // Redirect after 2 seconds
                     setTimeout(() => {
-                        window.location.href = '/games';
+                        window.location.href = '/admin/games';
                     }, 2000);
                 } else {
-                    // Error
                     showAlert(data.message || 'Failed to create game', 'error');
                 }
             } catch (error) {

@@ -256,7 +256,7 @@
 
 <body>
     <div class="container">
-        <a href="/categories/game/<%= category.game %>" class="back-link">← Back to Categories</a>
+        <a href="/admin/categories/game/<%= category.game._id || category.game %>" class="back-link">← Back to Categories</a>
 
         <div class="category-badge">Category: <%= category.name %>
         </div>

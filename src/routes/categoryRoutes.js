@@ -1,28 +1,33 @@
 const express = require('express');
-const  authenticate  = require('../middleware/authMiddleware').authMiddleware;
-const  adminMiddleware  = require('../middleware/adminMiddleware').adminMiddleware;
+const { authMiddleware } = require('../middleware/authMiddleware');
+const { adminMiddleware } = require('../middleware/adminMiddleware');
 const {
   getAllCategories,
   createCategory,
   updateCategory,
   deleteCategory,
-  getCategoryById,      
-  getCategoryByGame     
+  getCategoryById,
+  getCategoryByGame
 } = require('../controllers/categoryController');
+const {
+    createCategoryRules,
+    updateCategoryRules,
+    categoryIdRules,
+    validate
+} = require('../middleware/validators/categoryValidator');
 
 const router = express.Router();
 
-// All routes require authentication
-router.use(authenticate);
+router.use(authMiddleware);
 
 // Admin-only routes
-router.post('/', adminMiddleware, createCategory);
-router.put('/:categoryId', adminMiddleware, updateCategory);
-router.delete('/:categoryId', adminMiddleware, deleteCategory);
+router.post('/', adminMiddleware, createCategoryRules, validate, createCategory);
+router.put('/:categoryId', adminMiddleware, categoryIdRules, updateCategoryRules, validate, updateCategory);
+router.delete('/:categoryId', adminMiddleware, categoryIdRules, validate, deleteCategory);
 
 // Public routes
 router.get('/', getAllCategories);
-router.get('/:categoryId', getCategoryById);
+router.get('/:categoryId', categoryIdRules, validate, getCategoryById);
 router.get('/game/:gameId', getCategoryByGame);
 
 module.exports = router;

@@ -2,17 +2,27 @@ const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/playerAchievementController');
 const { authMiddleware } = require('../middleware/authMiddleware');
-const { privacyMiddleware, gameAccountPrivacyMiddleware } = require('../middleware/privacyMiddleware');
+const {
+    createPlayerAchievementRules,
+    achievementIdRules,
+    gameAccountIdRules,
+    validate
+} = require('../middleware/validators/playerAchievementValidator');
 
 router.use(authMiddleware);
 
-// Self-only routes (no privacy check)
-router.post('/', controller.createPlayerAchievement);
-router.post('/:achievementId/refresh', controller.refreshAchievementProgress);
-router.post('/game-account/:gameAccountId/refresh-all', controller.refreshAllAchievementsForGameAccount);
+// Create player achievement
+router.post('/', createPlayerAchievementRules, validate, controller.createPlayerAchievement);
 
-// Privacy-protected routes (viewing other users' achievements)
-router.get('/user/:username/achievements', privacyMiddleware, controller.getPlayerAchievementsByUsername);
-router.get('/game-account/:gameAccountId/achievements', gameAccountPrivacyMiddleware, controller.getPlayerAchievementsByGameAccount);
+router.get('/:gameAccountId/achievements', gameAccountIdRules, validate, controller.getPlayerAchievementsByGameAccount);
+
+// Refresh all achievements
+router.post('/game-account/:gameAccountId/refresh-all', gameAccountIdRules, validate, controller.refreshAllAchievementsForGameAccount);
+
+// Refresh single achievement
+router.post('/:achievementId/refresh', achievementIdRules, validate, controller.refreshAchievementProgress);
+
+router.delete('/:achievementId', achievementIdRules, validate, controller.deletePlayerAchievement);
+
 
 module.exports = router;

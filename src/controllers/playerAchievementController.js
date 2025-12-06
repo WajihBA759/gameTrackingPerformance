@@ -1,5 +1,7 @@
 // src/controllers/playerAchievementController.js
 const playerAchievementService = require('../services/playerAchievementService');
+const PlayerAchievement = require('../models/playerAchievement');
+
 
 exports.getPlayerAchievementsByGameAccount = async (req, res) => {
   try {
@@ -123,6 +125,21 @@ exports.getPlayerAchievementsByUsername = async (req, res) => {
     console.error('getPlayerAchievementsByUsername error:', error);
     res.status(error.statusCode || 500).send({ message: 'Server error', error: error.message });
   }
+};
+exports.getPlayerAchievementsByGameAccount = async (req, res) => {
+    try {
+        const { gameAccountId } = req.params;
+        
+        const playerAchievements = await PlayerAchievement.find({
+            gameAccount: gameAccountId,
+            status: 'in_progress'
+        }).populate('achievementDefinition categoryMetric');
+        
+        res.json(playerAchievements);
+    } catch (error) {
+        console.error('Error fetching player achievements:', error);
+        res.status(500).json({ message: 'Error fetching player achievements', error: error.message });
+    }
 };
 
 

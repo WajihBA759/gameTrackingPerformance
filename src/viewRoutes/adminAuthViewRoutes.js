@@ -1,12 +1,19 @@
-// viewRoutes/adminAuthViewRoutes.js
 const express = require('express');
 const router = express.Router();
-const adminAuthViewController = require('../viewControllers/adminAuthViewController');
 
-// show login form
-router.get('/admin/login', adminAuthViewController.renderAdminLogin);
+// Login page
+router.get('/login', (req, res) => {
+    res.render('adminLogin'); 
+});
 
-// show signup form
-router.get('/admin/signup', adminAuthViewController.renderAdminSignup);
+// Signup page
+router.get('/signup', (req, res) => {
+    res.render('adminSignup');
+});
+
+// Logout
+router.get('/logout', (req, res) => {
+    res.render('adminLogin');
+});
 
 module.exports = router;

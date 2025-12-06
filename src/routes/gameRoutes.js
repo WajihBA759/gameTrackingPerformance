@@ -4,19 +4,24 @@ const {
     updateGame,
     deleteGame,
     getGameById
-}=require('../controllers/gameController');
-const express=require('express');
-const router=express.Router();
-const authenticate=require('../middleware/authMiddleware').authMiddleware;
-router.use(authenticate);
-const adminMiddleware=require('../middleware/adminMiddleware').adminMiddleware;
+} = require('../controllers/gameController');
+const express = require('express');
+const router = express.Router();
+const { authMiddleware } = require('../middleware/authMiddleware');
+const { adminMiddleware } = require('../middleware/adminMiddleware');
+const {
+    createGameRules,
+    updateGameRules,
+    gameIdRules,
+    validate
+} = require('../middleware/validators/gameValidator');
 
+router.use(authMiddleware);
 
+router.post('/', adminMiddleware, createGameRules, validate, createGame);
+router.get('/', getAllGames);
+router.put('/:gameId', adminMiddleware, gameIdRules, updateGameRules, validate, updateGame);
+router.delete('/:gameId', adminMiddleware, gameIdRules, validate, deleteGame);
+router.get('/:gameId', gameIdRules, validate, getGameById);
 
-router.post('/',adminMiddleware,createGame);
-router.get('/',getAllGames);
-router.put('/:gameId',adminMiddleware,updateGame);
-router.delete('/:gameId',adminMiddleware,deleteGame);
-router.get('/:gameId',getGameById);
-
-module.exports=router;
+module.exports = router;

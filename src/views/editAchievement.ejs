@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Achievement</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); padding: 30px; }
+        h1 { color: #333; margin-bottom: 10px; }
+        .back-link { display: inline-block; margin-bottom: 20px; color: #667eea; text-decoration: none; font-weight: bold; }
+        .back-link:hover { text-decoration: underline; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: #333; font-weight: 600; }
+        input, select, textarea { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 5px; font-size: 1rem; font-family: inherit; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #667eea; }
+        .help-text { font-size: 0.85rem; color: #666; margin-top: 5px; }
+        .btn { padding: 12px 24px; border: none; border-radius: 5px; font-size: 1rem; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block; }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-secondary { background: #f5f5f5; color: #333; margin-left: 10px; }
+        .alert { padding: 15px; border-radius: 5px; margin-bottom: 20px; display: none; }
+        .alert-success { background: #d4edda; color: #155724; }
+        .alert-error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/admin/categories/<%= category._id %>/achievements" class="back-link">← Back to Achievements</a>
+        
+        <h1>✏️ Edit Achievement Definition</h1>
+        <p style="margin-bottom: 30px; color: #666;"><%= achievement.name %></p>
+
+        <div id="alertBox" class="alert"></div>
+
+        <form id="editAchievementForm">
+            <div class="form-group">
+                <label for="name">Name *</label>
+                <input type="text" id="name" value="<%= achievement.name %>" required>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Description *</label>
+                <textarea id="description" rows="3" required><%= achievement.description %></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="points">Points *</label>
+                <input type="number" id="points" value="<%= achievement.points %>" min="1" required>
+            </div>
+
+            <div class="form-group">
+                <label for="requiredAmount">Required Amount *</label>
+                <input type="number" id="requiredAmount" value="<%= achievement.requiredAmount %>" min="1" required>
+            </div>
+
+            <div class="form-group">
+                <label for="categoryMetric">Category Metric *</label>
+                <select id="categoryMetric" required>
+                    <% metrics.filter(m => m.logicType === 'sum').forEach(metric => { %>
+                        <option value="<%= metric._id %>" <%= String(achievement.categoryMetric._id) === String(metric._id) ? 'selected' : '' %>>
+                            <%= metric.metricName %> (<%= metric.metricPath %>)
+                        </option>
+                    <% }) %>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="isActive">Active</label>
+                <select id="isActive">
+                    <option value="false" <%= !achievement.isActive ? 'selected' : '' %>>No</option>
+                    <option value="true" <%= achievement.isActive ? 'selected' : '' %>>Yes</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="expirationDate">Expiration Date *</label>
+                <input type="date" id="expirationDate" value="<%= new Date(achievement.expirationDate).toISOString().split('T')[0] %>" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Update Achievement</button>
+            <a href="/admin/categories/<%= category._id %>/achievements" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        const achievementId = '<%= achievement._id %>';
+
+        document.getElementById('editAchievementForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = {
+                name: document.getElementById('name').value,
+                description: document.getElementById('description').value,
+                points: parseInt(document.getElementById('points').value),
+                requiredAmount: parseInt(document.getElementById('requiredAmount').value),
+                categoryMetric: document.getElementById('categoryMetric').value,
+                isActive: document.getElementById('isActive').value === 'true',
+                expirationDate: document.getElementById('expirationDate').value
+            };
+
+            try {
+                const response = await fetch(`/api/achievement-definition/${achievementId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert('Achievement updated successfully!', 'success');
+                    setTimeout(() => window.location.href = '/admin/categories/<%= category._id %>/achievements', 1000);
+                } else {
+                    showAlert(data.message || 'Failed to update achievement', 'error');
+                }
+            } catch (error) {
+                showAlert('Network error. Please try again.', 'error');
+            }
+        });
+
+        function showAlert(message, type) {
+            const alertBox = document.getElementById('alertBox');
+            alertBox.textContent = message;
+            alertBox.className = `alert alert-${type}`;
+            alertBox.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

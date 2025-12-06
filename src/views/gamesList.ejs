@@ -42,21 +42,30 @@
             gap: 15px;
         }
         
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
         .btn {
-            padding: 12px 24px;
+            padding: 10px 18px;
             border: none;
             border-radius: 5px;
-            font-size: 1rem;
+            font-size: 0.9rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s;
             text-decoration: none;
             display: inline-block;
+            text-align: center;
+            white-space: nowrap;
         }
         
         .btn-primary {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
+            padding: 12px 24px;
+            font-size: 1rem;
         }
         
         .btn-primary:hover {
@@ -64,54 +73,103 @@
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
         
+        .btn-logout {
+            background: #6b7280;
+            color: white;
+            padding: 12px 24px;
+            font-size: 1rem;
+        }
+        
+        .btn-logout:hover {
+            background: #4b5563;
+            transform: translateY(-2px);
+        }
+        
         .btn-edit {
             background: #4CAF50;
             color: white;
-            padding: 8px 16px;
-            font-size: 0.9rem;
+        }
+        
+        .btn-edit:hover {
+            background: #45a049;
+        }
+        
+        .btn-category {
+            background: #FF9800;
+            color: white;
+        }
+        
+        .btn-category:hover {
+            background: #e68900;
+        }
+        
+        .btn-view {
+            background: #2196F3;
+            color: white;
+        }
+        
+        .btn-view:hover {
+            background: #0b7dda;
         }
         
         .btn-delete {
             background: #f44336;
             color: white;
-            padding: 8px 16px;
-            font-size: 0.9rem;
+        }
+        
+        .btn-delete:hover {
+            background: #da190b;
         }
         
         .games-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 24px;
         }
         
         .game-card {
             border: 1px solid #e0e0e0;
             border-radius: 8px;
-            padding: 20px;
+            padding: 24px;
             transition: transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            flex-direction: column;
         }
         
         .game-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
         }
         
         .game-name {
             font-size: 1.5rem;
             font-weight: bold;
             color: #333;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
         
         .game-description {
             color: #666;
-            margin-bottom: 15px;
-            min-height: 60px;
+            margin-bottom: 20px;
+            flex-grow: 1;
+            line-height: 1.5;
+            min-height: 48px;
         }
         
         .game-actions {
-            display: flex;
-            gap: 10px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: auto;
+        }
+        
+        .game-actions .btn {
+            width: 100%;
+        }
+        
+        .game-actions .btn-view,
+        .game-actions .btn-delete {
+            grid-column: span 1;
         }
         
         .alert {
@@ -144,25 +202,35 @@
             margin-bottom: 20px;
             display: block;
         }
-        .btn-category {
-    background: #FF9800;
-    color: white;
-    padding: 8px 16px;
-    font-size: 0.9rem;
-}
-
-.btn-view {
-    background: #2196F3;
-    color: white;
-    padding: 8px 16px;
-    font-size: 0.9rem;
-}
-
-.game-actions {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-}
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .games-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .header-actions {
+                width: 100%;
+                justify-content: stretch;
+            }
+            
+            .header-actions .btn {
+                flex: 1;
+            }
+            
+            .game-actions {
+                grid-template-columns: 1fr;
+            }
+            
+            .game-actions .btn-view,
+            .game-actions .btn-delete {
+                grid-column: span 1;
+            }
+        }
     </style>
 </head>
 <body>
@@ -172,7 +240,10 @@
                 <h1>🎮 Games</h1>
                 <p>Manage your game library</p>
             </div>
-            <a href="/games/add" class="btn btn-primary">+ Add New Game</a>
+            <div class="header-actions">
+                <a href="/admin/games/add" class="btn btn-primary">+ Add New Game</a>
+                <button onclick="logout()" class="btn btn-logout">🚪 Logout</button>
+            </div>
         </div>
         
         <div id="alertBox" class="alert"></div>
@@ -187,21 +258,20 @@
             <div class="games-grid">
                 <% games.forEach(game => { %>
                     <div class="game-card">
-    <div class="game-name"><%= game.name %></div>
-    <div class="game-description">
-        <%= game.description || 'No description provided' %>
-            </div>
-            <div class="game-actions">
-                <a href="/games/edit/<%= game._id %>" class="btn btn-edit">Edit</a>
-                <a href="/categories/add/<%= game._id %>" class="btn btn-category">+ Add Category</a>
-                <a href="/categories/game/<%= game._id %>" class="btn btn-view">View Categories</a>
-                <button 
-                    class="btn btn-delete" 
-                    onclick="deleteGame('<%= game._id %>', '<%= game.name %>')">
-                    Delete
-                </button>
-            </div>
-        </div>
+                        <div class="game-name"><%= game.name %></div>
+                        <div class="game-description">
+                            <%= game.description || 'No description provided' %>
+                        </div>
+                        <div class="game-actions">
+                            <a href="/admin/games/edit/<%= game._id %>" class="btn btn-edit">✏️ Edit</a>
+                            <a href="/admin/categories/add/<%= game._id %>" class="btn btn-category">+ Category</a>
+                            <a href="/admin/categories/game/<%= game._id %>" class="btn btn-view">📂 View</a>
+                            <button 
+                                class="btn btn-delete" 
+                                onclick="deleteGame('<%= game._id %>', '<%= game.name %>')">
+                                🗑️ Delete
+                            </button>
+                        </div>
                     </div>
                 <% }) %>
             </div>
@@ -210,6 +280,22 @@
     
     <script>
         const token = localStorage.getItem('token') || 'YOUR_JWT_TOKEN_HERE';
+        
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                // Clear localStorage
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                
+                // Show alert
+                showAlert('Logged out successfully!', 'success');
+                
+                // Redirect to login page
+                setTimeout(() => {
+                    window.location.href = '/admin/login';
+                }, 1000);
+            }
+        }
         
         async function deleteGame(gameId, gameName) {
             if (!confirm(`Are you sure you want to delete "${gameName}"?`)) {
@@ -228,7 +314,6 @@
                 
                 if (response.ok) {
                     showAlert(data.message || 'Game deleted successfully!', 'success');
-                    // Reload page after 1 second
                     setTimeout(() => location.reload(), 1000);
                 } else {
                     showAlert(data.message || 'Failed to delete game', 'error');
@@ -245,7 +330,6 @@
             alertBox.className = `alert alert-${type}`;
             alertBox.style.display = 'block';
             
-            // Auto-hide after 3 seconds
             setTimeout(() => {
                 alertBox.style.display = 'none';
             }, 3000);

@@ -32,44 +32,44 @@ const CategorySchema = new Schema({
         default: []
     },
 });
-// Cascade delete CategoryMetrics - covers doc.deleteOne()
-CategorySchema.pre('deleteOne', { document: true, query: false }, async function (next) {
-    try {
-        const CategoryMetric = mongoose.model('CategoryMetric');
-        await CategoryMetric.deleteMany({ category: this._id });
-        next();
-    } catch (err) {
-        next(err);
-    }
-});
+// // Cascade delete CategoryMetrics - covers doc.deleteOne()
+// CategorySchema.pre('deleteOne', { document: true, query: false }, async function (next) {
+//     try {
+//         const CategoryMetric = mongoose.model('CategoryMetric');
+//         await CategoryMetric.deleteMany({ category: this._id });
+//         next();
+//     } catch (err) {
+//         next(err);
+//     }
+// });
 
-// Cascade delete CategoryMetrics - covers findByIdAndDelete()
-CategorySchema.pre('findOneAndDelete', async function (next) {
-    try {
-        const CategoryMetric = mongoose.model('CategoryMetric');
-        const doc = await this.model.findOne(this.getFilter());
-        if (doc) {
-            await CategoryMetric.deleteMany({ category: doc._id });
-        }
-        next();
-    } catch (err) {
-        next(err);
-    }
-});
+// // Cascade delete CategoryMetrics - covers findByIdAndDelete()
+// CategorySchema.pre('findOneAndDelete', async function (next) {
+//     try {
+//         const CategoryMetric = mongoose.model('CategoryMetric');
+//         const doc = await this.model.findOne(this.getFilter());
+//         if (doc) {
+//             await CategoryMetric.deleteMany({ category: doc._id });
+//         }
+//         next();
+//     } catch (err) {
+//         next(err);
+//     }
+// });
 
-// Cascade delete CategoryMetrics - covers deleteMany()
-CategorySchema.pre('deleteMany', async function (next) {
-    try {
-        const CategoryMetric = mongoose.model('CategoryMetric');
-        const docs = await this.model.find(this.getFilter());
-        if (docs.length > 0) {
-            const categoryIds = docs.map(d => d._id);
-            await CategoryMetric.deleteMany({ category: { $in: categoryIds } });
-        }
-        next();
-    } catch (err) {
-        next(err);
-    }
-});
+// // Cascade delete CategoryMetrics - covers deleteMany()
+// CategorySchema.pre('deleteMany', async function (next) {
+//     try {
+//         const CategoryMetric = mongoose.model('CategoryMetric');
+//         const docs = await this.model.find(this.getFilter());
+//         if (docs.length > 0) {
+//             const categoryIds = docs.map(d => d._id);
+//             await CategoryMetric.deleteMany({ category: { $in: categoryIds } });
+//         }
+//         next();
+//     } catch (err) {
+//         next(err);
+//     }
+// });
 
 module.exports = mongoose.model('Category', CategorySchema);

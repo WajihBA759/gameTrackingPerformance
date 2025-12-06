@@ -81,3 +81,23 @@ exports.getGameAccountTotalPoints = async (req, res) => {
     res.status(error.statusCode || 500).json({ message: 'Server error', error: error.message });
   }
 };
+// Add this new method to gameAccountController.js
+
+exports.getGameAccountsByUserId = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        
+        // Only allow users to fetch their own accounts
+        if (req.user.id !== userId) {
+            return res.status(403).json({ message: 'You can only view your own game accounts' });
+        }
+
+        const GameAccount = require('../models/gameAccount');
+        const gameAccounts = await GameAccount.find({ user: userId }).populate('game');
+        
+        res.status(200).json(gameAccounts);
+    } catch (error) {
+        console.error('Error fetching game accounts:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
